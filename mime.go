@@ -1,11 +1,11 @@
 package main
 
 import (
-	"os/exec"
-	"strings"
 	"fmt"
 	"mime"
+	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 func Mime(path string) (mimeType string, err error) {

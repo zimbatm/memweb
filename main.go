@@ -8,14 +8,20 @@ import (
 )
 
 var addr string
+var cors bool
+var ignores []string
+var index string
 var prefix string
 var watch bool
 
 func init() {
-	flag.StringVar(&addr, "addr", ":8484", "[host]:port to listen to")
-	flag.StringVar(&prefix, "prefix", "", "source folder")
+	//flag.BoolVar(&cors, "cors", false, "allow CORS requests")
 	flag.BoolVar(&watch, "watch", false, "refresh the cache when a file changes")
+	flag.StringVar(&addr, "addr", ":8484", "[host]:port to listen to")
+	flag.StringVar(&index, "index", "index.html", "Name of the index file")
+	flag.StringVar(&prefix, "prefix", "", "source folder")
 	flag.Parse()
+	ignores = []string{".git", ".hg", ".svn"}
 }
 
 func main() {
@@ -43,16 +49,17 @@ func main() {
 	log.Printf("Loading %s", rel)
 
 	vfs = make(VFS)
-	err = vfs.LoadDir(prefix)
+	err = vfs.LoadDir(prefix, ignores)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	if watch {
-		go WatchFS(vfs, prefix)
+		log.Printf("Starting watcher...")
+		go WatchSync(vfs, prefix, ignores)
 	}
 
-	s := NewServer(vfs, addr)
+	s := NewServer(vfs, addr, index, cors)
 
 	log.Printf("Starting on %s", addr)
 	log.Fatal(s.ListenAndServe())

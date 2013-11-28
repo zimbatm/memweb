@@ -5,11 +5,12 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
+	"hash"
 	"io/ioutil"
 	"log"
-	"hash"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Inode struct {
@@ -61,8 +62,8 @@ func (vfs VFS) Add(filename string, inode *Inode) (err error) {
 	}
 
 	vfs[filename] = inode
-	log.Printf("File %s added", filename)
 
+	log.Printf("File added: %s", filename)
 	return
 }
 
@@ -72,6 +73,7 @@ func (vfs VFS) Has(filename string) bool {
 
 func (vfs VFS) Remove(filename string) {
 	delete(vfs, filename)
+	log.Printf("File removed: %s", filename)
 }
 
 func (vfs VFS) LoadFile(filename string, srcPath string) (err error) {
@@ -93,7 +95,7 @@ func (vfs VFS) LoadFile(filename string, srcPath string) (err error) {
 	return
 }
 
-func (vfs VFS) LoadDir(prefix string) (err error) {
+func (vfs VFS) LoadDir(prefix string, ignores []string) (err error) {
 	err = filepath.Walk(prefix, func(path string, info os.FileInfo, errIn error) (err error) {
 		var filename string
 
@@ -108,6 +110,15 @@ func (vfs VFS) LoadDir(prefix string) (err error) {
 		if filename, err = filepath.Rel(prefix, path); err != nil {
 			log.Println("filename")
 			return
+		}
+
+		// Ignore some of the folders
+		for _, x := range strings.Split(filename, "/") {
+			for _, y := range ignores {
+				if x == y {
+					return
+				}
+			}
 		}
 
 		err = vfs.LoadFile(filename, path)

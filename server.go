@@ -9,8 +9,9 @@ import (
 )
 
 type VFSHandler struct {
-	vfs   VFS
-	index string
+	vfs       VFS
+	index     string
+	allowCORS bool
 }
 
 func (self *VFSHandler) findInode(path string) (inode *Inode, status int) {
@@ -68,10 +69,10 @@ func (self *VFSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func NewServer(vfs VFS, addr string) *http.Server {
+func NewServer(vfs VFS, addr string, index string, allowCORS bool) *http.Server {
 	return &http.Server{
 		Addr:           addr,
-		Handler:        &VFSHandler{vfs, "index.html"},
+		Handler:        &VFSHandler{vfs, index, allowCORS},
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
