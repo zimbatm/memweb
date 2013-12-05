@@ -61,6 +61,6 @@ func main() {
 
 	s := NewServer(vfs, addr, index, cors)
 
-	log.Printf("Starting on %s", addr)
+	log.Printf("Listening on %s", addr)
 	log.Fatal(s.ListenAndServe())
 }
