@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+PLATFORMS="darwin/386 darwin/amd64 linux/386 linux/amd64"
+OUTPUT=memweb
+TARGET=build
+
+mkdir -p $TARGET
+
+for PLATFORM in $PLATFORMS; do
+  export GOOS=${PLATFORM%/*}
+  export GOARCH=${PLATFORM#*/}
+  CMD="go build -o $TARGET/$OUTPUT.${GOOS}-${GOARCH}"
+  echo "GOOS=${GOOS} GOARCH=${GOARCH} $CMD"
+  $CMD
+done
+
+cp -v memweb-dispatch.sh $TARGET/memweb
+chmod +x $TARGET/memweb
