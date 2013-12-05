@@ -40,7 +40,7 @@ func gz(data []byte) ([]byte, error) {
 func hexdigest(data []byte, h hash.Hash) string {
 	h.Reset()
 	h.Write(data)
-	b := h.Sum([]byte{})
+	b := h.Sum(nil)
 
 	return fmt.Sprintf("%x", b)
 }
