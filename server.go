@@ -70,9 +70,12 @@ func (self *VFSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewServer(vfs VFS, addr string, index string, allowCORS bool) *http.Server {
+	var handler http.Handler
+	handler = &VFSHandler{vfs, index, allowCORS}
+	handler = LogMiddleware(handler, CommonLogFormat)
 	return &http.Server{
 		Addr:           addr,
-		Handler:        &VFSHandler{vfs, index, allowCORS},
+		Handler:        handler,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
