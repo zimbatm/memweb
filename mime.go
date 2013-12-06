@@ -1,11 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"mime"
-	"os/exec"
+	"net/http"
+	"os"
 	"path/filepath"
-	"strings"
 )
 
 func Mime(path string) (mimeType string, err error) {
@@ -14,23 +13,16 @@ func Mime(path string) (mimeType string, err error) {
 		return
 	}
 
-	out, err := exec.Command("file", "--mime", path).Output()
+	file, err := os.Open(path)
 	if err != nil {
 		return
 	}
 
-	out2 := strings.SplitN(
-		strings.TrimSpace(string(out)),
-		":",
-		2,
-	)
-
-	if path != out2[0] {
-		err = fmt.Errorf("%s != %s", path, out2[0])
+	// DetectContentType considers at most the first 512 bytes of data.
+	data := make([]byte, 512)
+	if _, err = file.Read(data); err != nil {
 		return
 	}
 
-	mimeType = strings.TrimSpace(out2[1])
-
-	return
+	return http.DetectContentType(data), nil
 }
