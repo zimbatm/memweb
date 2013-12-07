@@ -13,12 +13,12 @@ var mem bool
 var cors bool
 
 func init() {
-	
+
 	flag.StringVar(&addr, "addr", ":8484", "[host]:port to listen to")
 	flag.StringVar(&prefix, "prefix", "", "source folder")
 	flag.BoolVar(&mem, "mem", true, "load files into memory")
 	flag.BoolVar(&cors, "cors", false, "allow CORS requests")
-	
+
 	flag.Parse()
 }
 

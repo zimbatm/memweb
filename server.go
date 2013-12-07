@@ -13,7 +13,7 @@ func NewServer(addr string, prefix string, mem bool, cors bool) *http.Server {
 	if mem {
 		h = http.FileServer(httputil2.MemDir(prefix))
 	} else {
-		h =  http.FileServer(http.Dir(prefix))
+		h = http.FileServer(http.Dir(prefix))
 	}
 
 	h = httputil2.GzipHandler(h)
@@ -21,12 +21,13 @@ func NewServer(addr string, prefix string, mem bool, cors bool) *http.Server {
 	if cors {
 		h = httputil2.CORSHandler(h, "*", 0)
 	}
-	
+
 	h = httputil2.LogHandler(
 		h,
 		os.Stdout,
 		httputil2.CommonLogFormatter(httputil2.CommonLogFormat),
 	)
+
 	return &http.Server{
 		Addr:           addr,
 		Handler:        h,
