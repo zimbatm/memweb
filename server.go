@@ -4,84 +4,32 @@ import (
 	"github.com/zimbatm/httputil2"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
 	"time"
 )
 
-type VFSHandler struct {
-	vfs       VFS
-	index     string
-	allowCORS bool
-}
+func NewServer(addr string, prefix string, mem bool, cors bool) *http.Server {
+	var h http.Handler
 
-func (self *VFSHandler) findInode(path string) (inode *Inode, status int) {
-	status = http.StatusOK
-
-	if inode = self.vfs[path]; inode != nil {
-		return
-	}
-
-	if inode = self.vfs[filepath.Join(path, self.index)]; inode != nil {
-		return
-	}
-
-	status = http.StatusNotFound
-	if inode = self.vfs["404.html"]; inode != nil {
-		return
-	}
-
-	inode = &Inode{
-		data: []byte("Page not found"),
-		mime: "text/html",
-	}
-
-	return
-}
-
-func (self *VFSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/")
-
-	inode, status := self.findInode(path)
-
-	w.Header().Set("Content-Type", inode.mime)
-	w.Header().Add("Cache-Control", "must-revalidate")
-	w.Header().Add("Vary", "Accept-Encoding")
-
-	if inode.etag != "" {
-		w.Header().Set("ETag", inode.etag)
-
-		if r.Header.Get("If-None-Match") == inode.etag {
-			w.WriteHeader(http.StatusNotModified)
-			return
-		}
-	}
-
-	var data []byte
-	if len(inode.dataGz) > 0 && strings.Index(r.Header.Get("Accept-Encoding"), "gzip") >= 0 {
-		w.Header().Set("Content-Encoding", "gzip")
-		data = inode.dataGz
+	if mem {
+		h = http.FileServer(httputil2.MemDir(prefix))
 	} else {
-		data = inode.data
+		h =  http.FileServer(http.Dir(prefix))
 	}
 
-	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
-	w.WriteHeader(status)
-	w.Write(data)
-}
+	h = httputil2.GzipHandler(h)
 
-func NewServer(vfs VFS, addr string, index string, allowCORS bool) *http.Server {
-	var handler http.Handler
-	handler = &VFSHandler{vfs, index, allowCORS}
-	handler = httputil2.LogHandler(
-		handler,
+	if cors {
+		h = httputil2.CORSHandler(h, "*", 0)
+	}
+	
+	h = httputil2.LogHandler(
+		h,
 		os.Stdout,
 		httputil2.CommonLogFormatter(httputil2.CommonLogFormat),
 	)
 	return &http.Server{
 		Addr:           addr,
-		Handler:        handler,
+		Handler:        h,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
