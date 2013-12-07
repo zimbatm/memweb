@@ -1,7 +1,9 @@
 package main
 
 import (
+	"github.com/zimbatm/httputil2"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -72,7 +74,11 @@ func (self *VFSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func NewServer(vfs VFS, addr string, index string, allowCORS bool) *http.Server {
 	var handler http.Handler
 	handler = &VFSHandler{vfs, index, allowCORS}
-	handler = LogMiddleware(handler, CommonLogFormat)
+	handler = httputil2.LogHandler(
+		handler,
+		os.Stdout,
+		httputil2.CommonLogFormatter(httputil2.CommonLogFormat),
+	)
 	return &http.Server{
 		Addr:           addr,
 		Handler:        handler,
